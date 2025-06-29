@@ -1,7 +1,4 @@
-# fake_news_detection.py
-
 import pandas as pd
-import numpy as np
 import re
 import string
 import nltk
@@ -15,21 +12,48 @@ from sklearn.svm import LinearSVC
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
+import seaborn as sns
 
-# Download stopwords the first time
 nltk.download('stopwords')
 
-# ---------------------------
-# Load dataset
-# ---------------------------
-# Make sure your CSV file name matches!
-df = pd.read_csv("news.csv")  # Use your file name here
-print("First 5 rows of dataset:")
+# -----------------------------------
+# Bigger toy dataset (20 samples)
+# -----------------------------------
+data = {
+    'text': [
+        "Government confirms COVID-19 vaccines are safe and tested.",
+        "Fake news claims aliens have invaded New York.",
+        "NASA launches new Mars rover successfully.",
+        "Hoax: chocolate cures COVID-19 overnight!",
+        "Local man wins lottery twice in one week — true story.",
+        "Clickbait: you won’t believe this celebrity secret!",
+        "New policy to support small businesses approved.",
+        "Fake reports say drinking bleach kills virus.",
+        "Scientists discover new species in Amazon rainforest.",
+        "False rumor: school closing due to ghost sightings.",
+        "WHO says new variant is under control.",
+        "Misleading article: moon landing was fake.",
+        "Election results confirmed by authorities.",
+        "False claim: 5G towers spread coronavirus.",
+        "Economic recovery faster than expected.",
+        "Hoax: eating garlic prevents COVID-19.",
+        "New vaccine reduces infection by 90%.",
+        "Fake headline: zombies spotted in Paris.",
+        "Electric cars sales reach new record.",
+        "Conspiracy theory: earth is flat proven."
+    ],
+    'label': [
+        0, 1, 0, 1, 0, 1, 0, 1, 0, 1,
+        0, 1, 0, 1, 0, 1, 0, 1, 0, 1
+    ]
+}
+
+df = pd.DataFrame(data)
 print(df.head())
 
-# ---------------------------
-# Text cleaning
-# ---------------------------
+# -----------------------------------
+# NLP cleaning
+# -----------------------------------
 stop_words = set(stopwords.words('english'))
 stemmer = PorterStemmer()
 
@@ -46,21 +70,18 @@ def clean_text(text):
 
 df['text'] = df['text'].apply(clean_text)
 
-# ---------------------------
-# Vectorize text
-# ---------------------------
-vectorizer = TfidfVectorizer(max_features=5000)
+# -----------------------------------
+# Vectorize
+# -----------------------------------
+vectorizer = TfidfVectorizer(max_features=500)
 X = vectorizer.fit_transform(df['text'])
-y = df['label']  # Make sure 'label' is your target column
+y = df['label']
 
-# ---------------------------
-# Train/Test split
-# ---------------------------
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# ---------------------------
-# Multiple Models
-# ---------------------------
+# -----------------------------------
+# Model comparison
+# -----------------------------------
 models = {
     "Logistic Regression": LogisticRegression(),
     "Naive Bayes": MultinomialNB(),
@@ -75,9 +96,17 @@ for name, model in models.items():
     print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
     print("Classification Report:\n", classification_report(y_test, y_pred))
 
-# ---------------------------
+    # Confusion Matrix Heatmap
+    cm = confusion_matrix(y_test, y_pred)
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+    plt.title(f"{name} Confusion Matrix")
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    plt.show()
+
+# -----------------------------------
 # Word Cloud
-# ---------------------------
+# -----------------------------------
 text_data = ' '.join(df['text'])
 wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text_data)
 
